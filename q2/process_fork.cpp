@@ -1,8 +1,8 @@
 #include <iostream>
+#include <cstdlib>
 #include <unistd.h>
 #include <sys/types.h>
 #include <csignal>
-#include <cstdlib>
 
 void setupSignalMask() {
     sigset_t set;
@@ -26,7 +26,7 @@ void setupSignalMask() {
 void run_process(const char* process_name, int sleep_duration) {
     int counter = 0;
     int cycle = 0;
-    
+
     while (true) {
         std::cout << "Process 1 - Cycle number: " << cycle << " (PID: " << getpid() << ")";
         
@@ -34,7 +34,7 @@ void run_process(const char* process_name, int sleep_duration) {
             std::cout << " : " << counter << " is a multiple of 3";
         }
         std::cout << '\n' << std::flush;
-        
+
         counter++;
         cycle++;
         sleep(sleep_duration);
@@ -42,26 +42,41 @@ void run_process(const char* process_name, int sleep_duration) {
 }
 
 int main() {
-    pid_t pid;
-    
-    // Fork to create child process
-    pid = fork();
-    if (pid < 0) {
-        std::cerr << "Fork failed\n" << std::flush;
+    pid_t pid1;
+
+    // First fork: Create Child Process 1
+    pid1 = fork();
+    if (pid1 < 0) {
+        perror("First fork failed");
         exit(1);
-    } else if (pid == 0) {
-        // Child Process: Execute process2
+    } else if (pid1 == 0) {
+        // Child Process 1 (Process 1)
         setupSignalMask();
-        execl("./process2", "process2", nullptr);
-        
-        // If execl fails
-        std::cerr << "Exec failed\n" << std::flush;
-        exit(1);
+        run_process("Process 1", 1);
     }
-    
-    // Parent Process (Process 1)
-    setupSignalMask();
-    run_process("Process 1", 1);
-    
+
+    // Parent process continues here
+    if (pid1 > 0) {
+        pid_t pid2;
+        
+        // Parent forks Process 2
+        pid2 = fork();
+        if (pid2 < 0) {
+            perror("Second fork failed");
+            exit(1);
+        } else if (pid2 == 0) {
+            // Child Process 2 (Process 2)
+            setupSignalMask();
+            execlp("./process2", "process2", nullptr);
+            perror("Failed to exec process2");
+            exit(1);
+        }
+        
+        // Parent just loops and waits
+        while (true) {
+            sleep(2);
+        }
+    }
+
     return 0;
 }
