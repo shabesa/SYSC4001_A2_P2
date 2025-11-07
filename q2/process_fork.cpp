@@ -47,7 +47,7 @@ int main() {
     // First fork: Create Child Process 1
     pid1 = fork();
     if (pid1 < 0) {
-        perror("First fork failed");
+        std::cerr << "Failed to fork Process 1\n" << std::flush;
         exit(1);
     } else if (pid1 == 0) {
         // Child Process 1 (Process 1)
@@ -62,13 +62,13 @@ int main() {
         // Parent forks Process 2
         pid2 = fork();
         if (pid2 < 0) {
-            perror("Second fork failed");
+            std::cerr << "Failed to fork Process 2\n" << std::flush;
             exit(1);
         } else if (pid2 == 0) {
             // Child Process 2 (Process 2)
             setupSignalMask();
             execlp("./process2", "process2", nullptr);
-            perror("Failed to exec process2");
+            std::cerr << "Failed to exec process2\n" << std::flush;
             exit(1);
         }
         
